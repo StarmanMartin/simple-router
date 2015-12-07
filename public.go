@@ -3,6 +3,7 @@
 package router
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,7 +11,14 @@ import (
 )
 
 //HTTPHandler defines Type
-type HTTPHandler func(w http.ResponseWriter, r *Request)
+type HTTPHandler func(w http.ResponseWriter, r *Request) (bool, error)
+
+var (
+	// NotFoundHandler function if path not found
+	NotFoundHandler func(w http.ResponseWriter, r *Request)
+	// ErrorHandler reponshandler on Error
+	ErrorHandler func(err error, w http.ResponseWriter, r *Request)
+)
 
 //SubManager manages routs in a sub path
 type SubManager struct {
@@ -60,8 +68,9 @@ func (r *Manager) Public(path string) string {
 	cwd, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	fileServer := http.FileServer(http.Dir(cwd))
 
-	addNew(path+"/*", mGet, func(w http.ResponseWriter, r *Request) {
+	addNew(path+"/*", mGet, func(w http.ResponseWriter, r *Request) (bool, error) {
 		fileServer.ServeHTTP(w, r.Request)
+		return false, nil
 	})
 
 	return filepath.Join(cwd, path)
@@ -80,10 +89,27 @@ func (r *Manager) ServeHTTP(w http.ResponseWriter, httpR *http.Request) {
 	if finalHandler, ok := findListOfHandler(rootElem, path); ok {
 		for _, tempElem := range finalHandler {
 			req.RouteParams = *tempElem.params
-			tempElem.hanlder(w, req)
+			isNext, err := tempElem.hanlder(w, req)
+
+			if err != nil {
+				if ErrorHandler == nil {
+					log.Fatal("Error and no Handler")
+				} else {
+					ErrorHandler(err, w, req)
+				}
+			}
+
+			if !isNext {
+				return
+			}
 		}
 	} else {
-		w.WriteHeader(http.StatusNotFound)
+		if ErrorHandler == nil {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			NotFoundHandler(w, req)
+		}
+
 	}
 }
 
@@ -114,7 +140,7 @@ func validateURL(elements ...string) (pathConcated string) {
 
 		pathConcated += elm
 	}
-	
+
 	if len(pathConcated) == 0 {
 		pathConcated = "/"
 	}

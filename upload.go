@@ -34,20 +34,24 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 		cleanUpUpload()
 	})
 
-	return func(w http.ResponseWriter, r *Request) {
+	return func(w http.ResponseWriter, r *Request) (isNext bool, err error) {
 		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+		isNext = true
 		if err != nil {
-			log.Fatal(err)
+			return
 		}
 
 		r.PostForm = make(map[string][]string)
 		r.Files = make(uploads)
 		if strings.HasPrefix(mediaType, "multipart/") {
-			mr, _ := r.MultipartReader()
+			mr, err := r.MultipartReader()
+			if err == io.EOF {
+				return isNext, err
+			}
 			for {
 				p, err := mr.NextPart()
 				if err == io.EOF {
-					return
+					return isNext, err
 				}
 
 				if err != nil {
@@ -57,7 +61,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 				slurp, err := ioutil.ReadAll(p)
 
 				if err != nil {
-					log.Fatal(err)
+					return isNext, err
 				}
 
 				if len(p.Header["Content-Type"]) > 0 {
@@ -65,7 +69,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 					filename := uuidS.String() + p.FileName()
 					err = ioutil.WriteFile(filepath.Join(path, filename), slurp, sourceinfo.Mode())
 					if err != nil {
-						log.Fatal(err)
+						return isNext, err
 					}
 
 					fileElement := UploadFile{path, filename, p.Header["Content-Type"][0], len(slurp), nil}
@@ -79,6 +83,8 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 				}
 			}
 		}
+		
+		return isNext, nil
 	}
 }
 
