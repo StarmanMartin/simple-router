@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
 	"github.com/wayn3h0/go-uuid"
 )
 
@@ -46,16 +47,16 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 		if strings.HasPrefix(mediaType, "multipart/") {
 			mr, err := r.MultipartReader()
 			if err == io.EOF {
+				return isNext, nil
+			} else if err != nil {
 				return isNext, err
 			}
 			for {
 				p, err := mr.NextPart()
 				if err == io.EOF {
+					return isNext, nil
+				} else if err != nil {
 					return isNext, err
-				}
-
-				if err != nil {
-					log.Fatal(err)
 				}
 
 				slurp, err := ioutil.ReadAll(p)
@@ -83,7 +84,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 				}
 			}
 		}
-		
+
 		return isNext, nil
 	}
 }

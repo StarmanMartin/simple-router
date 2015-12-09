@@ -103,13 +103,12 @@ func (r *Manager) ServeHTTP(w http.ResponseWriter, httpR *http.Request) {
 				return
 			}
 		}
+	}
+	
+	if ErrorHandler == nil {
+		w.WriteHeader(http.StatusNotFound)
 	} else {
-		if ErrorHandler == nil {
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			NotFoundHandler(w, req)
-		}
-
+		NotFoundHandler(w, req)
 	}
 }
 
