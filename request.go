@@ -20,6 +20,12 @@ type Request struct {
 	Files uploads
 }
 
+// Redirect redirects the client
+func (r *Request) Redirect(w http.ResponseWriter, path string) {
+	req := r.Request
+	http.Redirect(w, req, path, http.StatusMovedPermanently)
+}
+
 func newRequest(r *http.Request) *Request {
 	return &Request{r, nil, nil}
 }
