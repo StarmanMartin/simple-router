@@ -53,7 +53,7 @@ func (rp routePath) isEqualToPath(text routePath) bool {
 type routeElement struct {
 	route      routePath
 	next       []*routeElement
-	hanlder    HTTPHandler
+	hanlder    []HTTPHandler
 	isVariable bool
 	isFinal    bool
 	isMatchAll bool
@@ -117,7 +117,7 @@ func addToAll(elm *routeElement) {
 	}
 }
 
-func addElemToTree(handler HTTPHandler, treeNode *routeElement, routeParts []string) (*routeElement, bool) {
+func addElemToTree(handler []HTTPHandler, treeNode *routeElement, routeParts []string) (*routeElement, bool) {
 	if len(routeParts) == 0 {
 		if treeNode.isFinal {
 			panic(fmt.Sprintf("Double route!! Last Element"))

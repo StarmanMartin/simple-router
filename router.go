@@ -73,7 +73,7 @@ func findListOfHandlerRec(elem *routeElement, params params, path []string) (fin
 	return
 }
 
-func addNew(route string, method string, handler HTTPHandler) (*routeElement, bool) {
+func addNew(route string, method string, handler []HTTPHandler) (*routeElement, bool) {
 	if route[:1] == "/" {
 		route = route[1:]
 	}

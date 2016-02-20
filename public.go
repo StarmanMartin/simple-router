@@ -31,31 +31,31 @@ type Manager struct {
 }
 
 // Get registers a route for the GET method
-func (r *SubManager) Get(route string, handler HTTPHandler) {
+func (r *SubManager) Get(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
 	addNew(route, mGet, handler)
 }
 
 // Post register a route for the POST method
-func (r *SubManager) Post(route string, handler HTTPHandler) {
+func (r *SubManager) Post(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
 	addNew(route, mPost, handler)
 }
 
 // Delete register a route for the Delete method
-func (r *SubManager) Delete(route string, handler HTTPHandler) {
+func (r *SubManager) Delete(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
 	addNew(route, mDelete, handler)
 }
 
 // Put register a route for the Put method
-func (r *SubManager) Put(route string, handler HTTPHandler) {
+func (r *SubManager) Put(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
 	addNew(route, mPut, handler)
 }
 
 // All register a route for the All methods
-func (r *SubManager) All(route string, handler HTTPHandler) {
+func (r *SubManager) All(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
 	if elm, isNew := addNew(route, mAll, handler); isNew {
 		addToAll(elm)
@@ -68,10 +68,10 @@ func (r *Manager) Public(path string) string {
 	cwd, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	fileServer := http.FileServer(http.Dir(cwd))
 
-	addNew(path+"/*", mGet, func(w http.ResponseWriter, r *Request) (bool, error) {
+	addNew(path+"/*", mGet, []HTTPHandler{func(w http.ResponseWriter, r *Request) (bool, error) {
 		fileServer.ServeHTTP(w, r.Request)
 		return false, nil
-	})
+	}})
 
 	return filepath.Join(cwd, path)
 }
@@ -89,19 +89,21 @@ func (r *Manager) ServeHTTP(w http.ResponseWriter, httpR *http.Request) {
 	if finalHandler, ok := findListOfHandler(rootElem, path); ok {
 		for _, tempElem := range finalHandler {
 			req.RouteParams = *tempElem.params
-			isNext, err := tempElem.hanlder(w, req)
+            for _, handleFunc := range tempElem.hanlder {
+                isNext, err := handleFunc(w, req)
 
-			if err != nil {
-				if ErrorHandler == nil {
-					log.Fatal("Error and no Handler")
-				} else {
-					ErrorHandler(err, w, req)
-				}
-			}
+                if err != nil {
+                    if ErrorHandler == nil {
+                        log.Fatal("Error and no Handler")
+                    } else {
+                        ErrorHandler(err, w, req)
+                    }
+                }
 
-			if !isNext {
-				return
-			}
+                if !isNext {
+                    return
+                }
+            }
 		}
 	}
 	
