@@ -54,10 +54,9 @@ type routeElement struct {
 	route      routePath
 	next       []*routeElement
 	hanlder    []HTTPHandler
-	isVariable bool
-	isFinal    bool
-	isMatchAll bool
+	isVariable, isFinal, isMatchAll, Xhr bool
 	index      int
+    
 }
 
 type finalRouteElement struct {
@@ -65,10 +64,10 @@ type finalRouteElement struct {
 	params *params
 }
 
-func newRouteElement(routeName string) (tempElement *routeElement) {
+func newRouteElement(routeName string, xhr bool) (tempElement *routeElement) {
 	route := routePath(routeName)
 	elementIndex++
-	tempElement = &routeElement{route, make([]*routeElement, 0), nil, false, false, false, elementIndex}
+	tempElement = &routeElement{route, make([]*routeElement, 0), nil, false, false, false, xhr, elementIndex}
 	if route.isVariable() {
 		tempElement.isVariable = true
 	}
@@ -117,7 +116,7 @@ func addToAll(elm *routeElement) {
 	}
 }
 
-func addElemToTree(handler []HTTPHandler, treeNode *routeElement, routeParts []string) (*routeElement, bool) {
+func addElemToTree(handler []HTTPHandler, treeNode *routeElement, routeParts []string, xhr bool) (*routeElement, bool) {
 	if len(routeParts) == 0 {
 		if treeNode.isFinal {
 			panic(fmt.Sprintf("Double route!! Last Element"))
@@ -128,13 +127,13 @@ func addElemToTree(handler []HTTPHandler, treeNode *routeElement, routeParts []s
 
 	for _, nextNode := range treeNode.next {
 		if nextNode.route.isEqualToString(routeParts[0]) {
-			addElemToTree(handler, nextNode, routeParts[1:])
+			addElemToTree(handler, nextNode, routeParts[1:], xhr)
 			return nextNode, false
 		}
 	}
 
-	newNode := newRouteElement(routeParts[0])
+	newNode := newRouteElement(routeParts[0], xhr)
 	treeNode.next = append(treeNode.next, newNode)
-	addElemToTree(handler, treeNode, routeParts)
+	addElemToTree(handler, treeNode, routeParts, xhr)
 	return newNode, true
 }
