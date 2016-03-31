@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
 	"github.com/wayn3h0/go-uuid"
 )
 
@@ -31,6 +30,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 
 	path = filepath.Join(cwd, path)
 	uploadPath = &path
+
 	cleanUpSync.Do(func() {
 		cleanUpUpload()
 	})

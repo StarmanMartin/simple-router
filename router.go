@@ -27,6 +27,10 @@ func paramsCopy(src params) params {
 var routerList map[string]*routeElement
 
 func init() {
+	resetRouteing()
+}
+
+func resetRouteing() {
 	routerList = make(map[string]*routeElement)
 	routerList[mGet] = newRouteElement(mGet, false)
 	routerList[mPost] = newRouteElement(mPost, false)
@@ -48,14 +52,14 @@ func findListOfHandlerRec(elem *routeElement, params params, path []string, xhr 
 	if handlerList, tempHandler, ok := elem.getNext(path[0], len(path) == 1); ok {
 		finalHandler = make([]*finalRouteElement, len(tempHandler))
 		for idx, tempElem := range tempHandler {
-            if !tempElem.Xhr || xhr {
-                tempParams := paramsCopy(params)
-                if tempElem.isVariable {
-                    tempParams[tempElem.route.variableName()] = path[0]
-                }
+			if !tempElem.Xhr || xhr {
+				tempParams := paramsCopy(params)
+				if tempElem.isVariable {
+					tempParams[tempElem.route.variableName()] = path[0]
+				}
 
-                finalHandler[idx] = &finalRouteElement{tempElem, &tempParams}
-            }
+				finalHandler[idx] = &finalRouteElement{tempElem, &tempParams}
+			}
 		}
 
 		for _, tempElem := range handlerList {

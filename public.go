@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+    "regexp"
 )
+
 
 //HTTPHandler defines Type
 type HTTPHandler func(w http.ResponseWriter, r *Request) (bool, error)
@@ -162,13 +164,10 @@ func NewXHRSubRouter(root string) *SubManager {
 
 func validateURL(elements ...string) (pathConcated string) {
 	for _, elm := range elements {
+        elm := strings.ToLower(elm)
 		if len(elm) > 0 && elm != "/" {
 			if elm[:1] != "/" {
 				elm = "/" + elm
-			}
-
-			if elm[len(elm)-2:] == "/" {
-				elm = elm[len(elm)-2:]
 			}
 		} else {
 			elm = ""
@@ -177,9 +176,13 @@ func validateURL(elements ...string) (pathConcated string) {
 		pathConcated += elm
 	}
 
+    trimReg := regexp.MustCompile(`/$`)    
+    pathConcated = strings.Replace(pathConcated, "//", "/", -1)
+    pathConcated = trimReg.ReplaceAllString(pathConcated, "")
+
 	if len(pathConcated) == 0 {
 		pathConcated = "/"
 	}
 
-	return
+	return pathConcated
 }

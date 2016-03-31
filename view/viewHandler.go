@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 )
+
 var (
 	//ViewPath is the root path of the views
 	ViewPath, cwd string
