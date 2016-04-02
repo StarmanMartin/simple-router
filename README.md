@@ -63,7 +63,7 @@ We can register new routes on a router. To register a route we simply call:
 
 #### Public file server
 
-To set a public web-folder the router has the method `router.Public(path string)`. The path has tow meanings:
+To set a public web-folder the router has the method `router.Public(path string)`. The path has two meanings:
 Firstly it sets the file path, relative to `os.Args[0]` path. Secondly It register a route to and a file server as handler.
 
 #### Upload via *multipart* form
@@ -84,7 +84,7 @@ To run a sever simply pass a router instance to the `http.ListenAndServe(":8000"
 ### Sub-Router
 
 `NewSubRouter(string)` and `NewXHRSubRouter(string)` return a sub-router.
-All routes register on a sub-router have the sub-router base as prefix.
+All routes registerde on a sub-router have the sub-router base as prefix.
 
 ```go
 // http://localhost:8000/home/less
@@ -95,6 +95,7 @@ NewSubRouter("/home").Get("/less", YourHandler)
 
 `NewXHRRouter()` and `NewXHRSubRouter(string)` return a normal router or sub-router.
 The only difference is that only requests where the field 'X-Requested-With' in the header is 'XMLHttpRequest' get served.
+(jQuery.Get(...) or jQuery.ajax(...))
 ''
 
 ## View
@@ -106,9 +107,8 @@ var ViewPath string
 func ParseTemplate(name, filePath string) (tmp *template.Template)
 ```
 
-It easily allows to parse templates. First the ViewPath is the relative path to `os.Args[0]` and needs to be set. The function
-ParseTemplate gets a name and a file path relative to the `ViewPath` path.
-By adding "&#060;!--extent: *filename* --\&#062;" The template automatically adds the file form *filename* to the template parsing.
+It easily allows to parse templates. First the `ViewPath` is the relative path to `os.Args[0]` and needs to be set. The function `ParseTemplate` gets a name and a file path relative to the `ViewPath` path.
+By adding "&#060;!--extent: *filename* --\&#062;" to the template, the template automatically adds the file form *filename* to the templateparsing process.
 To add multiple file simply separate the filenames by ','.
 
 #### Sample:
@@ -162,5 +162,5 @@ For the sake of testing, the request object is an own package.
 
 ### Tip
 
-The `"net/http/httptest"` package has different mocks for example a mocked response writer.
+The `"net/http/httptest"` package provides multible mocks, for example a mocked response writer.
 
