@@ -61,6 +61,9 @@ We can register new routes on a router. To register a route we simply call:
 * `.Put(path string, handler ...HTTPHandler)`
 * `.All(path string, handler ...HTTPHandler)`
 
+The path allows to add route parameter. "/:name" adds a parameter called "name" to the RouteParams filed at the request instance. It is possibe to use a wildecard in your path with \*.
+
+
 #### Public file server
 
 To set a public web-folder the router has the method `router.Public(path string)`. The path has two meanings:
