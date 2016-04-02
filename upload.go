@@ -10,7 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"github.com/wayn3h0/go-uuid"
+	"github.com/wayn3h0/go-uuid"    
+	"github.com/starmanmartin/simple-router/request"
 )
 
 var cleanUpSync sync.Once
@@ -35,7 +36,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 		cleanUpUpload()
 	})
 
-	return func(w http.ResponseWriter, r *Request) (isNext bool, err error) {
+	return func(w http.ResponseWriter, r *request.Request) (isNext bool, err error) {
 		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 		isNext = true
 		if err != nil {
@@ -43,7 +44,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 		}
 
 		r.PostForm = make(map[string][]string)
-		r.Files = make(uploads)
+		r.Files = make(request.Uploads)
 		if strings.HasPrefix(mediaType, "multipart/") {
 			mr, err := r.MultipartReader()
 			if err == io.EOF {
@@ -73,7 +74,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 						return isNext, err
 					}
 
-					fileElement := UploadFile{path, filename, p.Header["Content-Type"][0], len(slurp), nil}
+					fileElement := request.UploadFile{path, filename, p.Header["Content-Type"][0], len(slurp), nil}
 					if isBuffer {
 						fileElement.Buffer = slurp
 					}

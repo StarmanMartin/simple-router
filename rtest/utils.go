@@ -11,10 +11,11 @@ import (
     "regexp"
     "fmt"
     "strings"
+    "github.com/starmanmartin/simple-router/request"
 )
 
 // NewFileUploadRequest creates a new file upload http request with optional extra params
-func NewFileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
+func NewFileUploadRequest(uri string, params map[string]string, paramName, path string) (*request.Request, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -41,11 +42,11 @@ func NewFileUploadRequest(uri string, params map[string]string, paramName, path 
 
 	hRequest, _ := http.NewRequest("POST", uri, body)
 	hRequest.Header.Add("Content-type", "multipart/form-data;boundary="+writer.Boundary()+";")
-	return hRequest, nil
+	return request.NewRequest(hRequest), nil
 }
 
 // NewPostReqeust generates a POST request. It is simpel tu use ist as a test request.
-func NewPostReqeust(urlRequest string, vals url.Values) (*http.Request, error) {
+func NewPostReqeust(urlRequest string, vals url.Values) (*request.Request, error) {
     var valsBuffer *bytes.Buffer
     if vals != nil {
        vals = url.Values{}
@@ -60,11 +61,11 @@ func NewPostReqeust(urlRequest string, vals url.Values) (*http.Request, error) {
     
     req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
     
-    return req, nil
+    return request.NewRequest(req), nil
 }
 
 // NewXHRPostRequest generates a XHR POST request. It is simpel tu use ist as a test request.
-func NewXHRPostRequest(urlRequest string, vals url.Values) (*http.Request, error){
+func NewXHRPostRequest(urlRequest string, vals url.Values) (*request.Request, error){
     req, err := NewPostReqeust(urlRequest, vals)
     if err != nil {
         return nil, err
@@ -77,7 +78,7 @@ func NewXHRPostRequest(urlRequest string, vals url.Values) (*http.Request, error
 
 
 // NewGetRequest generates a GET request. It is simpel tu use ist as a test request.
-func NewGetRequest(urlRequest string, vals map[string]string) (*http.Request, error) {
+func NewGetRequest(urlRequest string, vals map[string]string) (*request.Request, error) {
     hasQuestoinReg := regexp.MustCompile(`\?`) 
     if len(vals) > 0 && !hasQuestoinReg.MatchString(urlRequest) {
         valsAsArray := make([]string, 0, len(vals))
@@ -95,11 +96,11 @@ func NewGetRequest(urlRequest string, vals map[string]string) (*http.Request, er
     
     req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
     
-    return req, nil
+    return request.NewRequest(req), nil
 }
 
 // NewXHRGetRequest generates a XHR GET request. It is simpel tu use ist as a test request.
-func NewXHRGetRequest(urlRequest string, vals map[string]string) (*http.Request, error){
+func NewXHRGetRequest(urlRequest string, vals map[string]string) (*request.Request, error){
     req, err := NewGetRequest(urlRequest, vals)
     if err != nil {
         return nil, err

@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"strings"
+
+	"github.com/starmanmartin/simple-router/request"
 )
 
 var elementIndex = 0
@@ -35,33 +37,24 @@ func (rp routePath) isVariable() bool {
 }
 
 func (rp routePath) variableName() string {
-	if strings.Index(string(rp), ":") == 0 {
-		return string(rp)[1:]
-	}
-
-	return string(rp)
+	return string(rp)[1:]
 }
 
 func (rp routePath) isEqualToString(text string) bool {
 	return string(rp) == text
 }
 
-func (rp routePath) isEqualToPath(text routePath) bool {
-	return string(rp) == string(text)
-}
-
 type routeElement struct {
-	route      routePath
-	next       []*routeElement
-	hanlder    []HTTPHandler
+	route                                routePath
+	next                                 []*routeElement
+	hanlder                              []HTTPHandler
 	isVariable, isFinal, isMatchAll, Xhr bool
-	index      int
-    
+	index                                int
 }
 
 type finalRouteElement struct {
 	*routeElement
-	params *params
+	params *request.Params
 }
 
 func newRouteElement(routeName string, xhr bool) (tempElement *routeElement) {

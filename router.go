@@ -2,6 +2,7 @@ package router
 
 import (
 	"strings"
+    "github.com/starmanmartin/simple-router/request"
 )
 
 const (
@@ -12,10 +13,8 @@ const (
 	mAll    string = "all"
 )
 
-type params map[string]string
-
-func paramsCopy(src params) params {
-	dst := make(params, len(src))
+func paramsCopy(src request.Params) request.Params {
+	dst := make(request.Params, len(src))
 
 	for k, v := range src {
 		dst[k] = v
@@ -40,25 +39,25 @@ func resetRouteing() {
 }
 
 func findListOfHandler(elem *routeElement, path []string, xhr bool) ([]*finalRouteElement, bool) {
-	list := make(params)
+	list := make(request.Params)
 	return findListOfHandlerRec(elem, list, path, xhr)
 }
 
-func findListOfHandlerRec(elem *routeElement, params params, path []string, xhr bool) (finalHandler []*finalRouteElement, returnOk bool) {
+func findListOfHandlerRec(elem *routeElement, params request.Params, path []string, xhr bool) (finalHandler []*finalRouteElement, returnOk bool) {
 	if len(path) == 0 {
 		return
 	}
 
 	if handlerList, tempHandler, ok := elem.getNext(path[0], len(path) == 1); ok {
-		finalHandler = make([]*finalRouteElement, len(tempHandler))
-		for idx, tempElem := range tempHandler {
+		finalHandler = make([]*finalRouteElement, 0, len(tempHandler))
+		for _, tempElem := range tempHandler {
 			if !tempElem.Xhr || xhr {
 				tempParams := paramsCopy(params)
 				if tempElem.isVariable {
 					tempParams[tempElem.route.variableName()] = path[0]
 				}
 
-				finalHandler[idx] = &finalRouteElement{tempElem, &tempParams}
+				finalHandler = append(finalHandler, &finalRouteElement{tempElem, &tempParams})
 			}
 		}
 

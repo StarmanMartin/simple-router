@@ -5,33 +5,34 @@ import (
 	"strings"
 	"testing"
     "net/http/httptest"
-	"github.com/starmanmartin/simple-router/rtest"
+	"github.com/starmanmartin/simple-router/rtest"    
+	"github.com/starmanmartin/simple-router/request"
 )
 
 var (
 	resivedList [6]int
 	pathlist    = map[string]HTTPHandler{
-		"/*": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/*": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[0]++
 			return false, nil
 		},
-		"/": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[1]++
 			return false, nil
 		},
-		"/:martin/du": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/:martin/du": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[2]++
 			return false, nil
 		},
-		"/hallo*": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/hallo*": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[3]++
 			return false, nil
 		},
-		"/hallo/*": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/hallo/*": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[4]++
 			return false, nil
 		},
-		"/hallo/:name": func(w http.ResponseWriter, r *Request) (bool, error) {
+		"/hallo/:name": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[5]++
 			return false, nil
 		},
@@ -121,8 +122,7 @@ func TestAllRouting(t *testing.T) {
 }
 
 func TestRedirect(t *testing.T) {
-    rh, _ := rtest.NewFileUploadRequest("http://localhost:80", make(map[string]string), "image", "test/image.png")   
-    r := newRequest(rh)
+    r, _ := rtest.NewFileUploadRequest("http://localhost:80", make(map[string]string), "image", "test/image.png")   
     res := httptest.NewRecorder()
     r.Redirect(res, "/test")
     if "/test" != res.Header().Get("Location") {

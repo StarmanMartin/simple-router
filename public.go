@@ -9,21 +9,22 @@ import (
 	"path/filepath"
 	"strings"
     "regexp"
+    "github.com/starmanmartin/simple-router/request"
 )
 
 
 //HTTPHandler defines Type
-type HTTPHandler func(w http.ResponseWriter, r *Request) (bool, error)
+type HTTPHandler func(w http.ResponseWriter, r *request.Request) (bool, error)
 
 var (
 	// NotFoundHandler function if path not found
-	NotFoundHandler func(w http.ResponseWriter, r *Request)
+	NotFoundHandler func(w http.ResponseWriter, r *request.Request)
 	// ErrorHandler reponshandler on Error
-	ErrorHandler func(err error, w http.ResponseWriter, r *Request)
+	ErrorHandler func(err error, w http.ResponseWriter, r *request.Request)
 	// XHRNotFoundHandler function if path not found
-	XHRNotFoundHandler func(w http.ResponseWriter, r *Request)
+	XHRNotFoundHandler func(w http.ResponseWriter, r *request.Request)
 	// XHRErrorHandler reponshandler on Error
-	XHRErrorHandler func(err error, w http.ResponseWriter, r *Request)
+	XHRErrorHandler func(err error, w http.ResponseWriter, r *request.Request)
 )
 
 //SubManager manages routs in a sub path
@@ -61,6 +62,21 @@ func (r *SubManager) Put(route string, handler ...HTTPHandler) {
 	addNew(route, mPut, handler, r.xhr)
 }
 
+// Use is to register a api for GET, POST, DELETE,and PUT
+func (r *SubManager) Use(route string, handler ...http.HandlerFunc) {
+	route = validateURL(r.base, route)
+    handlerFunc := make([]HTTPHandler, len(handler))
+    
+    for i, funcHandler := range handler {
+        handlerFunc[i] = func(w http.ResponseWriter, r *request.Request) (isNexed bool, err error){
+            funcHandler(w, r.Request)
+            return
+        }
+    }
+    
+	addNew(route, mAll, handlerFunc, r.xhr)
+}
+
 // All register a route for the All methods
 func (r *SubManager) All(route string, handler ...HTTPHandler) {
 	route = validateURL(r.base, route)
@@ -75,7 +91,7 @@ func (r *Manager) Public(path string) string {
 	cwd, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	fileServer := http.FileServer(http.Dir(cwd))
 
-	addNew(path+"/*", mGet, []HTTPHandler{func(w http.ResponseWriter, r *Request) (bool, error) {
+	addNew(path+"/*", mGet, []HTTPHandler{func(w http.ResponseWriter, r *request.Request) (bool, error) {
 		fileServer.ServeHTTP(w, r.Request)
 		return false, nil
 	}}, false)
@@ -89,11 +105,12 @@ func (r *Manager) UploadPath(path string, isBuffer bool) HTTPHandler {
 }
 
 func (r *Manager) ServeHTTP(w http.ResponseWriter, httpR *http.Request) {
-	req := newRequest(httpR)
+	req := request.NewRequest(httpR)
 	preparedPath := strings.Trim(req.URL.Path, "/")
 	method, path := strings.ToLower(req.Method), strings.Split(preparedPath, "/")
 	rootElem := routerList[method]
 	xhr := httpR.Header.Get("X-Requested-With") == "XMLHttpRequest"
+    
 	if finalHandler, ok := findListOfHandler(rootElem, path, xhr); ok {
 		for _, tempElem := range finalHandler {
 			req.RouteParams = *tempElem.params
@@ -104,13 +121,13 @@ func (r *Manager) ServeHTTP(w http.ResponseWriter, httpR *http.Request) {
                     w.WriteHeader(http.StatusBadRequest)
 					if !xhr {
 						if ErrorHandler == nil {
-							log.Fatal("Error and no Handler")
+							log.Panic("Error and no Handler")
 						} else {
 							ErrorHandler(err, w, req)
 						}
 					} else {
 						if XHRErrorHandler == nil {
-							log.Fatal("Error and no Handler")
+							log.Panic("Error and no Handler")
 						} else {
 							XHRErrorHandler(err, w, req)
 						}

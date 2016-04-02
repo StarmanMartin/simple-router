@@ -17,8 +17,7 @@ func TestUploadAndPublic(t *testing.T) {
 		"surname": "bar",
 	}
 
-	rh, err := rtest.NewFileUploadRequest("http://localhost:80", params, "image", "test/image.png")
-	r := newRequest(rh)
+	r, err := rtest.NewFileUploadRequest("http://localhost:80", params, "image", "test/image.png")
 
 	if err != nil {
 		t.Error("Error", err)
@@ -40,8 +39,7 @@ func TestUploadAndPublic(t *testing.T) {
 		t.Error("Error", err)
 	}
 
-	rh, err = rtest.NewFileUploadRequest("http://localhost:80", params, "image", "test/image.png")
-	r = newRequest(rh)
+	r, err = rtest.NewFileUploadRequest("http://localhost:80", params, "image", "test/image.png")
 
 	if err != nil {
 		t.Error("Error", err)
@@ -56,8 +54,7 @@ func TestUploadAndPublic(t *testing.T) {
 		t.Error("No error")
 	}
 
-	rh, err = rtest.NewPostReqeust("http://localhost:80", nil)
-	r = newRequest(rh)
+	r, err = rtest.NewPostReqeust("http://localhost:80", nil)
 
 	if err != nil {
 		t.Error("Error", err)
@@ -79,16 +76,14 @@ func TestUploadAndPublic(t *testing.T) {
 		for _, finalHanderTemp := range finalHandler {
 			for _, handerTemp := range finalHanderTemp.hanlder {
                 w := httptest.NewRecorder()
-                reqH, _ := rtest.NewGetRequest("http://localhost.com/test/" + imageName, nil)
-                req := newRequest(reqH)            
+                req, _ := rtest.NewGetRequest("http://localhost.com/test/" + imageName, nil)            
 				handerTemp(w, req)
                 if w.Header().Get("Content-Type") != "image/png" {
                     t.Error("Public download wrong Content-Type")
                 }
                 
                 w = httptest.NewRecorder()
-                reqH, _ = rtest.NewGetRequest("http://localhost.com/test/not.png", nil)
-                req = newRequest(reqH)                
+                req, _ = rtest.NewGetRequest("http://localhost.com/test/not.png", nil)              
                 handerTemp(w, req)
                 if w.Code != 404 {
                     t.Error("Not not found", w.Code)
