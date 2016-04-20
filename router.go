@@ -1,8 +1,10 @@
 package router
 
 import (
+	"regexp"
 	"strings"
-    "github.com/starmanmartin/simple-router/request"
+
+	"github.com/starmanmartin/simple-router/request"
 )
 
 const (
@@ -23,10 +25,17 @@ func paramsCopy(src request.Params) request.Params {
 	return dst
 }
 
-var routerList map[string]*routeElement
+var (
+	routerList map[string]*routeElement
+	splitPath  *regexp.Regexp
+)
 
 func init() {
+	initTree()
+	initUpload()
 	resetRouteing()
+
+	splitPath = regexp.MustCompile(`\/\{([^\}]|.[^\/])+\}`)
 }
 
 func resetRouteing() {
@@ -79,9 +88,35 @@ func findListOfHandlerRec(elem *routeElement, params request.Params, path []stri
 }
 
 func addNew(route string, method string, handler []HTTPHandler, xhr bool) (*routeElement, bool) {
+	return addElemToTree(handler, routerList[method], prepareRoute(route), xhr)
+}
+
+func prepareRoute(route string) []string {
 	if route[:1] == "/" {
 		route = route[1:]
 	}
 
-	return addElemToTree(handler, routerList[method], strings.Split(route, "/"), xhr)
+	firstSplit := splitPath.Split(route, -1)
+	regSplit := splitPath.FindAllString(route, -1)
+	if len(firstSplit) > 0 && firstSplit[len(firstSplit)-1] == "" {
+		firstSplit = firstSplit[:len(firstSplit)-1]
+	}
+	
+	var finaleRoute []string
+	for i, rp := range firstSplit {
+		finaleRoute = append(finaleRoute, strings.Split(rp, "/")...)
+		if i < len(regSplit) {
+			if regSplit[i][:1] == "/" {
+				regSplit[i] = regSplit[i][1:]
+			}
+
+			finaleRoute = append(finaleRoute, regSplit[i])
+		}
+	}
+
+	if len(finaleRoute) == 0 {
+		return []string{""}
+	}
+	
+	return finaleRoute
 }

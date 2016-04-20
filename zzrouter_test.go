@@ -2,15 +2,16 @@ package router
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
-    "net/http/httptest"
-	"github.com/starmanmartin/simple-router/rtest"    
+
 	"github.com/starmanmartin/simple-router/request"
+	"github.com/starmanmartin/simple-router/rtest"
 )
 
 var (
-	resivedList [6]int
+	resivedList [7]int
 	pathlist    = map[string]HTTPHandler{
 		"/*": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[0]++
@@ -36,28 +37,33 @@ var (
 			resivedList[5]++
 			return false, nil
 		},
+		"/hallo/{number=^[0-9]+$}/first/{.*}/{martin=^.+$}": func(w http.ResponseWriter, r *request.Request) (bool, error) {
+			resivedList[6]++
+			return false, nil
+		},
 	}
 
-	orders = map[string][6]int{
-		"":         {1, 1, 0, 0, 0, 0},
-		"hallo":    {1, 0, 0, 1, 0, 0},
-		"hallo/du": {1, 0, 1, 1, 1, 1},
+	orders = map[string][7]int{
+		"":         {1, 1, 0, 0, 0, 0, 0},
+		"hallo":    {1, 0, 0, 1, 0, 0, 0},
+		"hallo/du": {1, 0, 1, 1, 1, 1, 0},
+		"hallo/15/first/test/du": {1, 0, 0, 1, 1, 1, 1},
 	}
 )
 
 func TestDoubleRoute(t *testing.T) {
-    resetRouteing()
+	resetRouteing()
 	router := NewRouter()
-    
-    defer func() {
-        if r := recover(); r == nil {
-            t.Errorf("The code did not panic")
-        }
-    }()
 
-    // The following is the code under test
-    router.Get("/", nil)
-    router.Get("/", nil)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	// The following is the code under test
+	router.Get("/", nil)
+	router.Get("/", nil)
 }
 
 func TestGetRouting(t *testing.T) {
@@ -122,24 +128,30 @@ func TestAllRouting(t *testing.T) {
 }
 
 func TestRedirect(t *testing.T) {
-    r, _ := rtest.NewFileUploadRequest("http://localhost:80", make(map[string]string), "image", "test/image.png")   
-    res := httptest.NewRecorder()
-    r.Redirect(res, "/test")
-    if "/test" != res.Header().Get("Location") {
-        t.Error("Redirect did not work")
-    }
+	r, _ := rtest.NewFileUploadRequest("http://localhost:80", make(map[string]string), "image", "test/image.png")
+	res := httptest.NewRecorder()
+	r.Redirect(res, "/test")
+	if "/test" != res.Header().Get("Location") {
+		t.Error("Redirect did not work")
+	}
 }
 
 //--------------------------------------------------------------------------------------
 
 func routingTestUtil(t *testing.T, router *SubManager, method string) {
 	for pathU, list := range orders {
-		resivedList = [...]int{0, 0, 0, 0, 0, 0}
+		resivedList = [...]int{0, 0, 0, 0, 0, 0, 0}
+
 		if finalHandler, ok := findListOfHandler(routerList[method], strings.Split(pathU, "/"), false); ok {
+
 			for _, finalHanderTemp := range finalHandler {
-                finalHanderTemp.routeElement.String()
+				finalHanderTemp.routeElement.String()
 				up := *finalHanderTemp.params
 				if valP, isOK := up["martin"]; isOK && valP != "hallo" {
+					t.Error("Param wrong", valP)
+				}
+				
+				if valP, isOK := up["number"]; isOK && valP != "15" {
 					t.Error("Param wrong", valP)
 				}
 
@@ -147,12 +159,11 @@ func routingTestUtil(t *testing.T, router *SubManager, method string) {
 					handerTemp(nil, nil)
 				}
 			}
-
 		}
 
 		for listIndex := range resivedList {
 			if resivedList[listIndex] != list[listIndex] {
-				t.Error("wrong routing:", pathU, listIndex)
+				t.Error("wrong routing:", pathU, listIndex, resivedList[listIndex] ,list[listIndex])
 			}
 		}
 	}

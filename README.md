@@ -19,7 +19,7 @@ handler. This handler can handle a file upload from a *multipart* form.
 
 ```go
 import (
-    "github.com/starmanmaritn/simple-router"    
+    "github.com/starmanmaritn/simple-router"
     "github.com/starmanmartin/simple-router/request"
     "net/http"
 )
@@ -166,4 +166,3 @@ For the sake of testing, the request object is an own package.
 ### Tip
 
 The `"net/http/httptest"` package provides multible mocks, for example a mocked response writer.
-

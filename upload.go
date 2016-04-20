@@ -18,7 +18,7 @@ var cleanUpSync sync.Once
 var uploadPath *string
 var sourceinfo os.FileInfo
 
-func init() {
+func initUpload() {
 	cleanUpSync = sync.Once{}
 }
 

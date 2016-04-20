@@ -2,12 +2,21 @@ package router
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/starmanmartin/simple-router/request"
 )
 
-var elementIndex = 0
+var (
+	elementIndex                    = 0
+	regexpRegexp, regexpValueRegexp *regexp.Regexp
+)
+
+func initTree() {
+	regexpRegexp = regexp.MustCompile("^\\{[^\\}]+\\}$")
+	regexpValueRegexp = regexp.MustCompile("^\\{([^\\}\\=]+\\=)?([^\\}]*)\\}$")
+}
 
 type routePath string
 
@@ -36,8 +45,23 @@ func (rp routePath) isVariable() bool {
 	return strings.Index(string(rp), ":") == 0
 }
 
+func (rp routePath) isRegexp() bool {
+	return regexpRegexp.MatchString(string(rp))
+}
+
+func (rp routePath) getRegexpKeys() (string, bool, string) {
+	keys := regexpValueRegexp.FindAllStringSubmatch(string(rp), -1)
+	var isVaribale bool
+	if len(keys[0][1]) > 0 {
+		keys[0][1] = keys[0][1][:len(keys[0][1])-1]
+		isVaribale = true
+	}
+
+	return keys[0][2], isVaribale, keys[0][1]
+}
+
 func (rp routePath) variableName() string {
-	return string(rp)[1:]
+	return strings.Split(string(rp), ":")[1]
 }
 
 func (rp routePath) isEqualToString(text string) bool {
@@ -45,11 +69,13 @@ func (rp routePath) isEqualToString(text string) bool {
 }
 
 type routeElement struct {
-	route                                routePath
-	next                                 []*routeElement
-	hanlder                              []HTTPHandler
-	isVariable, isFinal, isMatchAll, Xhr bool
-	index                                int
+	route                                    routePath
+	routeAsRegx                              *regexp.Regexp
+	next                                     []*routeElement
+	hanlder                                  []HTTPHandler
+	isVariable, isFinal, isMatchAll, isRegex bool
+	Xhr                                      bool
+	index                                    int
 }
 
 type finalRouteElement struct {
@@ -60,22 +86,31 @@ type finalRouteElement struct {
 func newRouteElement(routeName string, xhr bool) (tempElement *routeElement) {
 	route := routePath(routeName)
 	elementIndex++
-	tempElement = &routeElement{route, make([]*routeElement, 0), nil, false, false, false, xhr, elementIndex}
+	tempElement = &routeElement{route, nil, make([]*routeElement, 0), nil, false, false, false, false, xhr, elementIndex}
 	if route.isVariable() {
 		tempElement.isVariable = true
 	}
 
 	if route.isWildcard() {
 		tempElement.isMatchAll = true
+	} else if route.isRegexp() {
+		tempElement.isRegex = true
+		routeRegexp, hasVariable, varName := route.getRegexpKeys()
+		tempElement.routeAsRegx = regexp.MustCompile(routeRegexp)
+		if hasVariable {
+			tempElement.isVariable = true
+		}
+		
+		tempElement.route = routePath(":" + varName + ":" + string(tempElement.route))
 	}
 
 	return
 }
 
-func (b routeElement) getNext(pathElem string, isLast bool) ([]*routeElement, []*routeElement, bool) {
+func (b *routeElement) getNext(pathElem string, isLast bool) ([]*routeElement, []*routeElement, bool) {
 	var nextList, finalIndex = make([]*routeElement, 0, len(b.next)), 0
 	for _, p := range b.next {
-		if p.route.match(pathElem) || p.isVariable {
+		if p.matchRegexp(pathElem) || p.route.match(pathElem) || (p.isVariable && !p.isRegex) {
 			if p.isFinal && isLast || p.isMatchAll {
 				nextList = append([]*routeElement{p}, nextList...)
 				finalIndex++
@@ -88,7 +123,24 @@ func (b routeElement) getNext(pathElem string, isLast bool) ([]*routeElement, []
 	return nextList[finalIndex:], nextList[:finalIndex], len(nextList) != 0
 }
 
-func (b routeElement) String() string {
+func (b *routeElement) matchRegexp(path string) (ok bool){
+	if !b.isRegex {
+		return
+	}
+
+	return b.routeAsRegx.MatchString(path)
+}
+
+func (b *routeElement) isEqualToPath(path string) (ok bool){
+	if b.isRegex {
+		comp := strings.Split(string(b.route), ":")[2]
+		return comp == path
+	}
+
+	return b.route.isEqualToString(path)
+}
+
+func (b *routeElement) String() string {
 	childs := ""
 	for _, el := range b.next {
 		childs = fmt.Sprintf("%s, %s", childs, el)
@@ -119,7 +171,7 @@ func addElemToTree(handler []HTTPHandler, treeNode *routeElement, routeParts []s
 	}
 
 	for _, nextNode := range treeNode.next {
-		if nextNode.route.isEqualToString(routeParts[0]) {
+		if nextNode.isEqualToPath(routeParts[0]) {
 			addElemToTree(handler, nextNode, routeParts[1:], xhr)
 			return nextNode, false
 		}
