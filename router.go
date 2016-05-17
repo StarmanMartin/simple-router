@@ -3,7 +3,6 @@ package router
 import (
 	"regexp"
 	"strings"
-"fmt"
 	"github.com/starmanmartin/simple-router/request"
 )
 
@@ -125,7 +124,6 @@ func prepareRoute(route string) []string {
 	if len(finaleRoute) == 0 {
 		return []string{""}
 	}
-	fmt.Println(finaleRoute)
 
 	return finaleRoute
 }
