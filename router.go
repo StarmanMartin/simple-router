@@ -3,6 +3,7 @@ package router
 import (
 	"regexp"
 	"strings"
+"fmt"
 	"github.com/starmanmartin/simple-router/request"
 )
 
@@ -91,7 +92,10 @@ func addNew(route string, method string, handler []HTTPHandler, xhr bool) (*rout
 }
 
 func prepareRoute(route string) []string {
-	
+	if route[:1] == "/" {
+		route = route[1:]
+	}
+
 	firstSplit := splitPath.Split(route, -1)
 	regSplit := splitPath.FindAllString(route, -1)
 	if len(firstSplit) > 0 && firstSplit[len(firstSplit)-1] == "" {
@@ -100,11 +104,15 @@ func prepareRoute(route string) []string {
 
 	var finaleRoute []string
 	for i, rp := range firstSplit {
-		if rp[:1] == "/" {
-			rp = rp[1:]
+		if len(rp) > 0 {
+			if rp[:1] == "/" {
+					rp = rp[1:]
+			}
+			
+			finaleRoute = append(finaleRoute, strings.Split(rp, "/")...)
 		}
 
-		finaleRoute = append(finaleRoute, strings.Split(rp, "/")...)
+		
 		if i < len(regSplit) {
 			if regSplit[i][:1] == "/" {
 				regSplit[i] = regSplit[i][1:]
@@ -117,6 +125,7 @@ func prepareRoute(route string) []string {
 	if len(finaleRoute) == 0 {
 		return []string{""}
 	}
+	fmt.Println(finaleRoute)
 
 	return finaleRoute
 }
