@@ -14,8 +14,8 @@ var (
 )
 
 func initTree() {
-	regexpRegexp = regexp.MustCompile("^\\{[^\\}]+\\}$")
-	regexpValueRegexp = regexp.MustCompile("^\\{([^\\}\\=]+\\=)?([^\\}]*)\\}$")
+	regexpRegexp = regexp.MustCompile("^\\{.+\\}$")
+	regexpValueRegexp = regexp.MustCompile("^\\{([^\\}\\=]+\\=)?(.+)\\}$")
 }
 
 type routePath string
@@ -97,6 +97,7 @@ func newRouteElement(routeName string, xhr bool) (tempElement *routeElement) {
 		tempElement.isRegex = true
 		routeRegexp, hasVariable, varName := route.getRegexpKeys()
 		tempElement.routeAsRegx = regexp.MustCompile(routeRegexp)
+
 		if hasVariable {
 			tempElement.isVariable = true
 		}
@@ -108,7 +109,9 @@ func newRouteElement(routeName string, xhr bool) (tempElement *routeElement) {
 }
 
 func (b *routeElement) getNext(pathElem string, isLast bool) ([]*routeElement, []*routeElement, bool) {
+				
 	var nextList, finalIndex = make([]*routeElement, 0, len(b.next)), 0
+	
 	for _, p := range b.next {
 		if p.matchRegexp(pathElem) || p.route.match(pathElem) || (p.isVariable && !p.isRegex) {
 			if p.isFinal && isLast || p.isMatchAll {

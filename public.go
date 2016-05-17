@@ -200,6 +200,6 @@ func validateURL(elements ...string) (pathConcated string) {
 	if len(pathConcated) == 0 {
 		pathConcated = "/"
 	}
-
+	
 	return pathConcated
 }

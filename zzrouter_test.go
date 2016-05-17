@@ -37,7 +37,7 @@ var (
 			resivedList[5]++
 			return false, nil
 		},
-		"/hallo/{number=^[0-9]+$}/first/{.*}/{martin=^.+$}": func(w http.ResponseWriter, r *request.Request) (bool, error) {
+		"/hallo/{number=^[0-9]+$}/f/{^[\\d]{2,3}$}": func(w http.ResponseWriter, r *request.Request) (bool, error) {
 			resivedList[6]++
 			return false, nil
 		},
@@ -47,7 +47,7 @@ var (
 		"":         {1, 1, 0, 0, 0, 0, 0},
 		"hallo":    {1, 0, 0, 1, 0, 0, 0},
 		"hallo/du": {1, 0, 1, 1, 1, 1, 0},
-		"hallo/15/first/test/du": {1, 0, 0, 1, 1, 1, 1},
+		"hallo/15/f/23": {1, 0, 0, 1, 1, 0, 1},
 	}
 )
 
@@ -128,7 +128,7 @@ func TestAllRouting(t *testing.T) {
 }
 
 func TestRedirect(t *testing.T) {
-	r, _ := rtest.NewFileUploadRequest("http://localhost:80", make(map[string]string), "image", "test/image.png")
+	r, _ := rtest.NewGetRequest("http://localhost:80", nil)
 	res := httptest.NewRecorder()
 	r.Redirect(res, "/test")
 	if "/test" != res.Header().Get("Location") {
