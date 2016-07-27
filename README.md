@@ -10,10 +10,7 @@ go get github.com/starmanmaritn/simple-router
 
 ## why simple-router
 
-simple-router registers a list routes with a list of handlers for the registered routes.
-On incoming requests it matches the route against a list and calls all handler.
-The call order of the handler is in the order they are registered. A nother feature is the *multipart/form-data*
-handler. This handler can handle a file upload from a *multipart* form.
+simple-router registers a list of routes with a list of handlers. On incoming requests it matches the route and calls all fitting handler. The call order of the handler is the same order they were registered. A nother feature is the multipart/form-data handler.
 
 ## Getting started
 
