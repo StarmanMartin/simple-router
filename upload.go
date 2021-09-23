@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/google/uuid"
+	"github.com/starmanmartin/simple-router/request"
 	"io"
 	"io/ioutil"
 	"log"
@@ -10,8 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"github.com/wayn3h0/go-uuid"    
-	"github.com/starmanmartin/simple-router/request"
 )
 
 var cleanUpSync sync.Once
@@ -67,7 +67,7 @@ func newUploadPaser(path string, isBuffer bool) HTTPHandler {
 				}
 
 				if len(p.Header["Content-Type"]) > 0 {
-					uuidS, _ := uuid.NewV1()
+					uuidS, _ := uuid.NewUUID()
 					filename := uuidS.String() + p.FileName()
 					err = ioutil.WriteFile(filepath.Join(path, filename), slurp, sourceinfo.Mode())
 					if err != nil {
